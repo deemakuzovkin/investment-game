@@ -13,7 +13,7 @@ jobs:
       ## we wish to test again:
       matrix:
         go-version: [1.16.x, 1.17.x]
-        platform: [ubuntu-latest, macos-latest, windows-latest] #?
+        platform: [ubuntu-latest, macos-latest]
     
     ## Defines the platform for each test run
     runs-on: ${{ matrix.platform }}
