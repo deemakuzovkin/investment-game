@@ -19,6 +19,7 @@ type DataCache struct {
 	db *bitcask.Bitcask
 }
 
+// Connect init data service
 func Connect(path string) (*DataCache, error) {
 	mu.Lock()
 	defer mu.Unlock()
@@ -33,4 +34,14 @@ func Connect(path string) (*DataCache, error) {
 		}
 	}
 	return DATABASE[path], nil
+}
+
+// Add object to data
+func (data *DataCache) Add(key []byte, value []byte) error {
+	return data.db.Put(key, value)
+}
+
+// Get object by key
+func (data *DataCache) Get(key []byte) ([]byte, error) {
+	return data.db.Get(key)
 }
