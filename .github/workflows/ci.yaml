@@ -1,0 +1,56 @@
+name: ci
+on:
+  push:
+    tags:
+      - v*
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  golangci:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    name: lint
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/setup-go@v3
+        with:
+          go-version: '1.17.x'
+      - uses: actions/checkout@v3
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.29
+  test:
+    needs: golangci
+    strategy:
+      matrix:
+        platform: [ubuntu-latest, macos-latest] 
+    runs-on: ${{ matrix.platform }}
+    
+    steps:
+    - name: Install Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: '1.17.x'
+    - name: Checkout code
+      uses: actions/checkout@v2
+      with:
+        repository: zm99by/investment-game
+    - name: Test
+      run: go test ./...
+  build:
+    runs-on: ubuntu-latest
+    needs: [golangci, test]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: '1.17.x'
+      - name: Build
+        run: go build -v ./...
