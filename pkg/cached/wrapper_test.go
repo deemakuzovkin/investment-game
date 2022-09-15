@@ -1,7 +1,6 @@
 package cached
 
 import (
-	"git.mills.io/prologic/bitcask"
 	"reflect"
 	"testing"
 )
@@ -51,7 +50,7 @@ func TestConnect(t *testing.T) {
 
 func TestDataCache_Add(t *testing.T) {
 	type fields struct {
-		db *bitcask.Bitcask
+		name string
 	}
 	type args struct {
 		key   []byte
@@ -66,7 +65,7 @@ func TestDataCache_Add(t *testing.T) {
 		{
 			name: "add object to data",
 			fields: fields{
-				db: testCacheData.db,
+				name: TestCachePath,
 			},
 			args: args{
 				key:   testKey,
@@ -77,7 +76,7 @@ func TestDataCache_Add(t *testing.T) {
 		{
 			name: "add nil object to data",
 			fields: fields{
-				db: testCacheData.db,
+				name: TestCachePath,
 			},
 			args: args{
 				key:   nil,
@@ -88,10 +87,12 @@ func TestDataCache_Add(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			data := &DataCache{
-				db: tt.fields.db,
+			dataCache, err := Connect(tt.fields.name)
+			if (err != nil) != tt.wantErr && dataCache == nil {
+				t.Errorf("Connect() error = %v, wantErr %v", err, tt.wantErr)
+				return
 			}
-			if err := data.Add(tt.args.key, tt.args.value); (err != nil) != tt.wantErr {
+			if err := dataCache.Add(tt.args.key, tt.args.value); (err != nil) != tt.wantErr {
 				t.Errorf("Add() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
@@ -99,12 +100,12 @@ func TestDataCache_Add(t *testing.T) {
 }
 
 func TestDataCache_Get(t *testing.T) {
-
 	type fields struct {
-		db *bitcask.Bitcask
+		name string
 	}
 	type args struct {
-		key []byte
+		key   []byte
+		value []byte
 	}
 	tests := []struct {
 		name    string
@@ -116,10 +117,11 @@ func TestDataCache_Get(t *testing.T) {
 		{
 			name: "get object",
 			fields: fields{
-				db: testCacheData.db,
+				name: TestCachePath,
 			},
 			args: args{
-				key: testKey,
+				key:   testKey,
+				value: testValue,
 			},
 			want:    testValue,
 			wantErr: false,
@@ -127,10 +129,11 @@ func TestDataCache_Get(t *testing.T) {
 		{
 			name: "get nil key",
 			fields: fields{
-				db: testCacheData.db,
+				name: TestCachePath,
 			},
 			args: args{
-				key: nil,
+				key:   nil,
+				value: nil,
 			},
 			want:    nil,
 			wantErr: true,
@@ -138,16 +141,76 @@ func TestDataCache_Get(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			data := &DataCache{
-				db: tt.fields.db,
+			dataCache, err := Connect(tt.fields.name)
+			if (err != nil) != tt.wantErr && dataCache == nil {
+				t.Errorf("Connect() error = %v, wantErr %v", err, tt.wantErr)
+				return
 			}
-			got, err := data.Get(tt.args.key)
+			if err := dataCache.Add(tt.args.key, testValue); (err != nil) != tt.wantErr {
+				t.Errorf("Add() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			got, err := dataCache.Get(tt.args.key)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Get() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Get() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestDataCache_Remove(t *testing.T) {
+	type fields struct {
+		name string
+	}
+	type args struct {
+		key   []byte
+		value []byte
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "remove object",
+			fields: fields{
+				name: TestCachePath,
+			},
+			args: args{
+				key:   testKey,
+				value: testValue,
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dataCache, err := Connect(tt.fields.name)
+			if (err != nil) != tt.wantErr && dataCache == nil {
+				t.Errorf("Connect() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if err := dataCache.Add(tt.args.key, testValue); (err != nil) != tt.wantErr {
+				t.Errorf("Add() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			getData, err := dataCache.Get(tt.args.key)
+			if (err != nil) != tt.wantErr && getData == nil {
+				t.Errorf("Get() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if err := dataCache.Remove(tt.args.key); (err != nil) != tt.wantErr {
+				t.Errorf("Remove() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			getData, err = dataCache.Get(tt.args.key)
+			if getData != nil || err.Error() != "error: key not found" {
+				t.Errorf("Get after remove error = %v, wantErr %v", err, tt.wantErr)
+				return
 			}
 		})
 	}

@@ -3,6 +3,7 @@ package cached
 import (
 	"fmt"
 	"git.mills.io/prologic/bitcask"
+	"github.com/zenthangplus/goccm"
 	"os"
 	"sync"
 )
@@ -17,6 +18,11 @@ var (
 
 type DataCache struct {
 	db *bitcask.Bitcask
+}
+
+type Item struct {
+	Key   []byte
+	Value []byte
 }
 
 // Connect init data service
@@ -44,4 +50,38 @@ func (data *DataCache) Add(key []byte, value []byte) error {
 // Get object by key
 func (data *DataCache) Get(key []byte) ([]byte, error) {
 	return data.db.Get(key)
+}
+
+// Remove object by key
+func (data *DataCache) Remove(key []byte) error {
+	return data.db.Delete(key)
+}
+
+// GetList data
+func (data *DataCache) GetList() (<-chan Item, error) {
+	total := 0
+	manager := goccm.New(10)
+	channel := make(chan Item)
+	go func(inputCache *DataCache) {
+		defer close(channel)
+		inputCache.db.Fold(func(key []byte) error {
+			manager.Wait()
+			total++
+			go func(resp chan Item) {
+				defer manager.Done()
+				get, err := inputCache.db.Get(key)
+				if err != nil {
+					return
+				}
+				resp <- Item{
+					Key:   key,
+					Value: get,
+				}
+			}(channel)
+			return nil
+		})
+		fmt.Printf("Total scan: %d\n", total)
+		manager.WaitAllDone()
+	}(data)
+	return channel, nil
 }
