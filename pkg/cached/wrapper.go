@@ -17,7 +17,8 @@ var (
 )
 
 type DataCache struct {
-	db *bitcask.Bitcask
+	db   *bitcask.Bitcask
+	path string
 }
 
 type Item struct {
@@ -36,7 +37,8 @@ func Connect(path string) (*DataCache, error) {
 			return nil, err
 		}
 		DATABASE[path] = &DataCache{
-			db: base,
+			db:   base,
+			path: path,
 		}
 	}
 	return DATABASE[path], nil
@@ -84,4 +86,18 @@ func (data *DataCache) GetList() (<-chan Item, error) {
 		manager.WaitAllDone()
 	}(data)
 	return channel, nil
+}
+
+// Clear all data
+func (data *DataCache) Clear() error {
+	mu.Lock()
+	defer mu.Unlock()
+	err := data.db.Close()
+	if err != nil {
+		return err
+	}
+	path := data.path
+	DATABASE[path] = nil
+	tmpPath := fmt.Sprintf("%s/%s", os.TempDir(), path)
+	return os.RemoveAll(tmpPath)
 }
