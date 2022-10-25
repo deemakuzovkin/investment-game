@@ -1,5 +1,12 @@
 package common
 
+/*tables*/
 const (
-	TableProperty = "property"
+	TableProperty     = "property"
+	TableDayEvent     = "day-events"
+	TableLastDayEvent = "last-day-event"
+)
+
+const (
+	LatestKey = "latest"
 )

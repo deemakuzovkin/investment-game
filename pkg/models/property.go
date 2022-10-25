@@ -13,6 +13,7 @@ type Property struct {
 	Name    string  `json:"name"`
 	Comment string  `json:"comment"`
 	Price   float64 `json:"price"`
+	Profit  float64 `json:"profit"`
 }
 
 func (prop *Property) key() []byte {
