@@ -1,1 +1,1 @@
-# Investment-game
+# Investment game
