@@ -79,7 +79,6 @@ func TestInvestor_Get(t *testing.T) {
 				t.Errorf("Get() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-
 			gotInvestor, err := inv.Get()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Get() error = %v, wantErr %v", err, tt.wantErr)
@@ -88,7 +87,6 @@ func TestInvestor_Get(t *testing.T) {
 			if gotInvestor.Id != inv.Id {
 				t.Errorf("Not equals inputId = %v, outId %v", inv.Id, gotInvestor.Id)
 			}
-
 		})
 	}
 }
