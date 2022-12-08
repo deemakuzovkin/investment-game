@@ -7,6 +7,7 @@ const (
 	TableDayEvent     = "day-events"
 	TableLastDayEvent = "last-day-event"
 	TableInvestor     = "investor"
+	TableTransaction  = "transactions"
 )
 
 const (
