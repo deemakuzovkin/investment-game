@@ -2,10 +2,11 @@ package models
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/deemakuzovkin/investment-game/pkg/cached"
 	"github.com/deemakuzovkin/investment-game/pkg/common"
 	"github.com/deemakuzovkin/investment-game/pkg/utils"
-	"time"
 )
 
 type BudgetTransaction struct {
@@ -42,7 +43,12 @@ func (transaction *BudgetTransaction) AddOrUpdate() error {
 	if err != nil {
 		newBudget.Sum = transaction.Sum
 	} else {
-		newBudget.Sum = currentBudget.Sum + transaction.Sum
+		switch transaction.Type {
+		case common.AddBudgetTransactionType:
+			newBudget.Sum = currentBudget.Sum + transaction.Sum
+		case common.SellingPropertyType:
+			newBudget.Sum = currentBudget.Sum + transaction.Sum
+		}
 	}
 	return newBudget.AddOrUpdate()
 }
